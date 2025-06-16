@@ -1,0 +1,420 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Gift Card Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .input-group {
+            margin-bottom: 30px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .scan-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .scan-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .loading .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .results-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .results-header h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .results-stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .stat {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat strong {
+            color: #667eea;
+        }
+        
+        .code-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .code-item {
+            background: white;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .code-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .code-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .code-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: #218838;
+        }
+        
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .results-stats {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎁 Gift Card Scanner</h1>
+            <p>Extract UK Amazon gift card codes from YouTube videos</p>
+        </div>
+        
+        <div class="content">
+            <form id="scanForm">
+                <div class="input-group">
+                    <label for="videoUrl">YouTube Video URL (15-25 minutes recommended)</label>
+                    <input 
+                        type="url" 
+                        id="videoUrl" 
+                        placeholder="https://www.youtube.com/watch?v=..." 
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="scan-btn" id="scanBtn">
+                    🔍 Scan Video for Gift Cards
+                </button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p><strong>Analyzing video...</strong></p>
+                <p>This may take 30-60 seconds depending on video length</p>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="results-header">
+                    <h3>📊 Scan Results</h3>
+                    <div class="results-stats" id="stats">
+                        <!-- Stats will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="code-list" id="codeList">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+            
+            <div class="error" id="error" style="display: none;">
+                <!-- Error messages will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('scanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const videoUrl = document.getElementById('videoUrl').value.trim();
+            const scanBtn = document.getElementById('scanBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
+            
+            // Reset UI
+            loading.style.display = 'none';
+            results.style.display = 'none';
+            error.style.display = 'none';
+            
+            if (!videoUrl) {
+                showError('Please enter a YouTube video URL');
+                return;
+            }
+            
+            // Validate YouTube URL
+            if (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
+                showError('Please enter a valid YouTube URL');
+                return;
+            }
+            
+            // Start scanning
+            scanBtn.disabled = true;
+            scanBtn.textContent = '🔄 Scanning...';
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: videoUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Scan failed');
+                }
+                
+                displayResults(data);
+                
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                scanBtn.disabled = false;
+                scanBtn.textContent = '🔍 Scan Video for Gift Cards';
+                loading.style.display = 'none';
+            }
+        });
+        
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+        
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const stats = document.getElementById('stats');
+            const codeList = document.getElementById('codeList');
+            
+            // Populate stats
+            stats.innerHTML = `
+                <div class="stat">
+                    <strong>${data.codes_found}</strong> codes found
+                </div>
+                <div class="stat">
+                    <strong>${data.processing_time}s</strong> processing time
+                </div>
+                <div class="stat">
+                    <strong>${data.video_info.title.substring(0, 30)}...</strong>
+                </div>
+            `;
+            
+            // Populate results
+            if (data.results && data.results.length > 0) {
+                codeList.innerHTML = data.results.map(result => `
+                    <div class="code-item" onclick="copyToClipboard('${result.code}')">
+                        <div class="code-value">
+                            ${result.code}
+                            <button class="copy-btn" onclick="copyToClipboard('${result.code}'); event.stopPropagation();">📋 Copy</button>
+                        </div>
+                        <div class="code-meta">
+                            Found at ${formatTime(result.timestamp)} • Frame ${result.frame_number} • Confidence: ${Math.round(result.confidence * 100)}%
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                codeList.innerHTML = `
+                    <div class="no-results">
+                        <h3>😔 No gift card codes found</h3>
+                        <p>The video was scanned but no valid UK Amazon gift card codes were detected.</p>
+                        <p>Make sure the codes are clearly visible and in the format XXXX-XXXXXX-XXXX</p>
+                    </div>
+                `;
+            }
+            
+            results.style.display = 'block';
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                // Show feedback
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</body>
+</html>
